@@ -1,0 +1,55 @@
+name: Clang 17 
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Add LLVM repository and install Clang 17 and libc++
+      - name: Install Clang 17 and libc++ from LLVM repo
+        run: |
+          sudo apt update
+          sudo apt install -y wget lsb-release software-properties-common
+          # Add the official LLVM repository
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17
+          sudo apt install -y libc++-17-dev libc++abi-17-dev libomp-17-dev 
+
+      # Step 3: Set Clang 17 as the default compiler and use libc++
+      - name: Set Clang 17 as default for both clang and clang++
+        run: |
+          # Set clang and clang++ to Clang 17
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
+          sudo update-alternatives --set clang /usr/bin/clang-17
+          sudo update-alternatives --set clang++ /usr/bin/clang++-17
+          
+          # Verify the correct versions are set
+          clang --version
+          clang++ --version
+
+      # Step 4: Create a build directory and build the project with Clang and libc++
+      - name: Build project with Clang 17 and libc++
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang 
+          make
+
+      # Step 5: Run tests with CTest
+      - name: Run tests
+        run: |
+          cd build/tests
+          ./coros_test
+

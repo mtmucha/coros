@@ -1,0 +1,50 @@
+name: GCC 13
+
+# Trigger the workflow on push or pull request to the main branch
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install GCC 13 and CMake
+      - name: Install GCC 13 and CMake
+        run: |
+          sudo apt update
+          sudo apt install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt update
+          sudo apt install -y gcc-13 g++-13 cmake
+
+      # Step 3: Set GCC 13 as the default compiler
+      - name: Set GCC 13 as default
+        run: |
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+
+      # Step 4: Create a build directory and build the project with CMake
+      - name: Build project
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          make
+
+      - name: Run tests
+        run: |
+         cd build/tests
+         ./coros_test
+
+
+
